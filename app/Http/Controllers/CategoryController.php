@@ -42,8 +42,12 @@ class CategoryController extends Controller
             'success' => 'Category Saved Successfully'
         ],201);
     }
-    public function edit($id)
+     public function edit($id)
     {
-        return $id;
+        $category = Category::find($id);
+        if(! $category){
+            abort(404);
+        }
+        return $category;
     }
 }
