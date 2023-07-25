@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+
 </head>
 
 <body>
@@ -25,14 +26,15 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <input type="hidden" name="category_id" id="category_id">
                         <div class="form-group mb-3">
                             <label for="">Name</label>
-                            <input type="text" name="name" class="form-control">
+                            <input type="text" name="name" id="name" class="form-control">
                             <span id="nameError" class="text-danger error-messages"></span>
                         </div>
                         <div class="form-group mb-1">
                             <label for="">Type</label>
-                            <select name="type"class="form-control">
+                            <select name="type" id="type" class="form-control">
                                 <option disabled selected>Choose Option</option>
                                 <option value="electronic">Electronic</option>
                             </select>
@@ -49,7 +51,7 @@
     </div>
     <div class="row">
         <div class="col-md-6 offset-3" style="margin-top: 100px">
-            <a class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#exampleModal">Add Category</a>
+            <a class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#exampleModal" id="add_category">Add Category</a>
             <table id="category-table" class="table">
                 <thead>
                   <tr>
@@ -77,7 +79,7 @@
                 }
             });
 
-            $('#category-table').DataTable({
+            var table = $('#category-table').DataTable({
                 processing: true,
                 serverSide: true,
 
@@ -93,6 +95,8 @@
             $('#saveBtn').html('Save Category');
             var form = $('#ajaxForm')[0];
             $('#saveBtn').click(function() {
+                $('#saveBtn').html('soving...');
+                $('#saveBtn').attr('disabled' ,true)
                 $('.error-messages').html('');
 
                 var formData = new FormData(form);
@@ -105,6 +109,14 @@
                     data: formData,
 
                     success: function(response) {
+                        table.draw();
+
+                        $('#saveBtn').attr('disabled' ,false)
+                        $('#saveBtn').html('save Category');
+                        $('#name').val('');
+                        $('#type').val('');
+                        $('#category_id').val('');
+
                         $('.ajax-modal').modal('hide');
                         if (response) {
                             swal("Success!",response.success, "success");
@@ -112,6 +124,8 @@
                         }
                     },
                     error: function(error) {
+                        $('#saveBtn').attr('disabled' ,false)
+                        $('#saveBtn').html('save Category');
                         if (error) {
                             console.log(error.responseJSON.errors.name)
                             $('#nameError').html(error.responseJSON.errors.name);
@@ -130,13 +144,55 @@
                     url: '{{route("edit",'')}}' + '/' + id,
                     method: 'GET',
                     success: function(response){
-                        console.log(response)
+                       $('.ajax-modal').modal('show');
+                       $('#modal-title').html('Edit Category');
+                       $('#saveBtn').html('Update Category');
+
+                       $('#category_id').val(response.id);
+                       $('#name').val(response.name);
+                       var type = capitalizeFirstLetter(response.type);
+                       $('#type').empty().append('<option selected value="'+response.type+'">'+ type +'</option>');
+                        console.log(response.type)
                     },
                     error: function(error){
                         console.log(error)
                     }
                 });
             });
+
+            //Delete Button
+            $('body').on('click', '.deleteButton',function(){
+                var id = $(this).data('id');
+
+                if(confirm('Are you sure to delete this this Item'))
+                {
+                        $.ajax({
+                        url: '{{route("delete",'')}}' + '/' + id,
+                        method: 'DELETE',
+                        success: function(response){
+                            table.draw();
+                            swal("Success!",response.success, "success");
+
+                        },
+                        error: function(error){
+                            console.log(error)
+                        }
+                    });
+                }
+
+            });
+            $('#add_category').click(function(){
+                $('#modal-title').html('Create Category');
+                $('#saveBtn').html('save Category');
+
+            });
+            function capitalizeFirstLetter(string){
+            return string.charAt(0).toUpperCase() + string.slice(1);
+            }
+
+            $('.ajax-modal').on('hidden.bs.modal', function () {
+                $('.error-messages').html('');
+             })
         });
     </script>
 </body>
