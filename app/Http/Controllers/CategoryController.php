@@ -29,6 +29,23 @@ class CategoryController extends Controller
     }
     public function store(Request $request)
     {
+       if($request->category_id != null)
+       {
+        $category = Category::find($request->category_id);
+        if(! $category){
+            abort(404);
+        }
+        $category->update([
+            'name' => $request->name,
+            'type' => $request->type,
+
+        ]);
+        return response()->json([
+            'success' => 'Category Updated Successfully'
+        ],201);
+       }
+       else
+       {
         $request->validate([
             'name' => 'required|min:2|max:20',
             'type' => 'required'
@@ -41,13 +58,25 @@ class CategoryController extends Controller
         return response()->json([
             'success' => 'Category Saved Successfully'
         ],201);
+       }
     }
-     public function edit($id)
+    public function edit($id)
     {
         $category = Category::find($id);
         if(! $category){
             abort(404);
         }
         return $category;
+    }
+    public function destroy($id)
+    {
+        $category = Category::find($id);
+        if(! $category){
+            abort(404);
+        }
+        $category->delete();
+        return response()->json([
+            'success' => 'Category Deleted Successfully'
+        ],201);
     }
 }
